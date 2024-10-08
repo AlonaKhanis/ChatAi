@@ -1,17 +1,17 @@
-from flask import Blueprint, json, render_template, request, jsonify
+
+from flask import Blueprint, json, request, jsonify
 from app.models import db, QuestionAnswer
 import http.client
 import os
 
 main = Blueprint('main', __name__)
 
-@main.route('/')
-def index():
-    return render_template("index.html")
+
 
 @main.route('/chat', methods=['POST'])
 def ask_question():
     data = request.json
+  
     question = data.get('question')
 
     # Send question to ChatGPT (via RapidAPI)
@@ -25,8 +25,11 @@ def ask_question():
     conn.request("POST", "/gpt4", payload, headers)
     res = conn.getresponse()
     data = res.read()
+    
+
 
     response_data = data.decode("utf-8")
+
     response_json = json.loads(response_data)
     answer = response_json.get("result", "No response")
 
@@ -35,4 +38,6 @@ def ask_question():
     db.session.add(question_answer)
     db.session.commit()
 
-    return jsonify({"question": question, "answer": answer})
+
+    return jsonify({"answer": answer})
+
