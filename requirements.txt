@@ -6,11 +6,4 @@ alembic==1.13.3
 Flask-SQLAlchemy==3.1.1
 config==0.5.1
 psycopg2-binary==2.9.9
-
-# Flask
-# SQLAlchemy
-# psycopg2-binary
-# python-dotenv
-# alembic
-# pytest
-# http.client
+openai==0.28.0
