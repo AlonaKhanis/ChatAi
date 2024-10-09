@@ -1,43 +1,37 @@
-
-from flask import Blueprint, json, request, jsonify
+from flask import Blueprint, request, jsonify
 from app.models import db, QuestionAnswer
-import http.client
+import openai
 import os
+import logging
 
 main = Blueprint('main', __name__)
 
-
-
-@main.route('/chat', methods=['POST'])
+@main.route('/ask', methods=['POST'])
 def ask_question():
-    data = request.json
-  
-    question = data.get('question')
+    try:
+        data = request.json
+        question = data.get('question')
 
-    # Send question to ChatGPT (via RapidAPI)
-    conn = http.client.HTTPSConnection("chatgpt-42.p.rapidapi.com")
-    payload = f'{{"messages":[{{"role":"user","content":"{question}"}}],"web_access":false}}'
-    headers = {
-        'x-rapidapi-key': os.getenv("RAPIDAPI_KEY"),
-        'x-rapidapi-host': "chatgpt-42.p.rapidapi.com",
-        'Content-Type': "application/json"
-    }
-    conn.request("POST", "/gpt4", payload, headers)
-    res = conn.getresponse()
-    data = res.read()
-    
+        if not question:
+            return jsonify({"error": "No question provided"}), 400
 
+        
+        openai.api_key = os.getenv("OPENAI_API_KEY") 
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-0125",
+            messages=[{"role": "user", "content": question}],
+            max_tokens=100
+        )
 
-    response_data = data.decode("utf-8")
+        answer = response.choices[0].message['content'].strip() if response.choices else "No response"
 
-    response_json = json.loads(response_data)
-    answer = response_json.get("result", "No response")
+        # Save the question and answer to the database
+        question_answer = QuestionAnswer(question=question, answer=answer)
+        db.session.add(question_answer)
+        db.session.commit()
 
-    # Save question and answer to the database
-    question_answer = QuestionAnswer(question=question, answer=answer)
-    db.session.add(question_answer)
-    db.session.commit()
+        return jsonify({"answer": answer})
 
-
-    return jsonify({"answer": answer})
-
+    except Exception as e:
+        logging.error(f"An error occurred: {str(e)}")
+        return jsonify({"error": "An internal error occurred"}), 500

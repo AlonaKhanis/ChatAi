@@ -7,7 +7,7 @@ class QuestionAnswer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question = db.Column(db.String, nullable=False)
     answer = db.Column(db.String, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
     def __init__(self, question, answer):
         self.question = question
