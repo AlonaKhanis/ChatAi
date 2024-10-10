@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app import db 
+from app import db
 from app.models import QuestionAnswer
 import openai
 import os
@@ -25,13 +25,22 @@ def ask_question():
 
         answer = response.choices[0].message['content'].strip() if response.choices else "No response"
 
-       
+        # Attempt to save the question and answer to the database
         question_answer = QuestionAnswer(question=question, answer=answer)
         db.session.add(question_answer)
-        db.session.commit()
+        
+        try:
+            db.session.commit()
+        except Exception as db_error:
+            db.session.rollback() 
+            logging.error(f"Database error occurred: {str(db_error)}")
+            return jsonify({"error": "Failed to save the answer to the database"}), 500
 
         return jsonify({"answer": answer})
 
+    except openai.error.OpenAIError as api_error:
+        logging.error(f"OpenAI API error occurred: {str(api_error)}")
+        return jsonify({"error": "Failed to get a response from the AI model"}), 500
     except Exception as e:
-        logging.error(f"An error occurred: {str(e)}") 
+        logging.error(f"An unexpected error occurred: {str(e)}")
         return jsonify({"error": "An internal error occurred"}), 500
