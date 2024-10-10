@@ -1,5 +1,4 @@
 from app import db
-from datetime import datetime
 
 class QuestionAnswer(db.Model):
     __tablename__ = 'question_answer'
@@ -7,7 +6,6 @@ class QuestionAnswer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question = db.Column(db.String, nullable=False)
     answer = db.Column(db.String, nullable=False)
-
 
     def __init__(self, question, answer):
         self.question = question

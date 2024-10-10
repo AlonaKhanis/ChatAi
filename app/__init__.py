@@ -1,23 +1,30 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate  
 from config import Config
 
-# Initialize Flask app and SQLAlchemy
 db = SQLAlchemy()
+migrate = Migrate()
 
 def create_app(config_name='default'):
     app = Flask(__name__)
+
+    
     if config_name == 'testing':
-        app.config.from_object('config.TestingConfig')  # Load the testing configuration
+        app.config.from_object('config.TestingConfig')
     else:
         app.config.from_object(Config)
 
-    # Initialize database
     db.init_app(app)
+    
+    # Initialize Migrate with app and db
+    migrate.init_app(app, db)
 
-    from app.routes import main
-    app.register_blueprint(main)
+    with app.app_context():
+        from app.routes import main
+        app.register_blueprint(main)
+
+        db.create_all()  
 
     return app
-
-app = create_app() 

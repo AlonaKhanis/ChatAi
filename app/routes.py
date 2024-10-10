@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.models import db, QuestionAnswer
+from app import db 
+from app.models import QuestionAnswer
 import openai
 import os
 import logging
@@ -15,8 +16,7 @@ def ask_question():
         if not question:
             return jsonify({"error": "No question provided"}), 400
 
-        
-        openai.api_key = os.getenv("OPENAI_API_KEY") 
+        openai.api_key = os.getenv("OPENAI_API_KEY")
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-0125",
             messages=[{"role": "user", "content": question}],
@@ -25,7 +25,7 @@ def ask_question():
 
         answer = response.choices[0].message['content'].strip() if response.choices else "No response"
 
-        # Save the question and answer to the database
+       
         question_answer = QuestionAnswer(question=question, answer=answer)
         db.session.add(question_answer)
         db.session.commit()
@@ -33,5 +33,5 @@ def ask_question():
         return jsonify({"answer": answer})
 
     except Exception as e:
-        logging.error(f"An error occurred: {str(e)}")
+        logging.error(f"An error occurred: {str(e)}") 
         return jsonify({"error": "An internal error occurred"}), 500
